@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 import { OctagonAlertIcon } from 'lucide-react';
+import { FaGithub, FaGoogle } from 'react-icons/fa'
 
 const formSchema = z.object({
     email: z.email(),
@@ -26,6 +27,7 @@ const formSchema = z.object({
 const SignInView = () => {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false)
 
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -42,14 +44,34 @@ const SignInView = () => {
 
         await authClient.signIn.email({
             email: data.email,
-            password: data.password
+            password: data.password,
+            callbackURL: '/',
         }, {
             onSuccess: () => {
-                router.push("/");
+                router.push('/')
 
             },
             onError: ({ error }) => {
                 setError(error.message);
+            },
+        })
+    }
+    // callbackURL: '/' - 'for now not woring'
+    const onSocials = async (provider: 'github' | 'google') => {
+        setLoading(true)
+        setError(null)
+
+        await authClient.signIn.social({
+            provider: provider,
+
+        }, {
+            onSuccess: () => {
+                setLoading(false)
+
+            },
+            onError: ({ error }) => {
+                setError(error.message);
+                setLoading(false)
             },
         })
     }
@@ -72,7 +94,7 @@ const SignInView = () => {
                                         <FormItem>
                                             <FormLabel> Email</FormLabel>
                                             <FormControl>
-                                                <Input placeholder='x@emaple.com' type='email' {...field} />
+                                                <Input placeholder='x@example.com' type='email' {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -99,7 +121,7 @@ const SignInView = () => {
                                 )}
                                 <Button
                                     type="submit"
-                                    disabled={form.formState.isSubmitting}
+                                    disabled={form.formState.isSubmitting || loading}
                                     className="w-full"
                                 >
                                     Sign In
@@ -109,8 +131,12 @@ const SignInView = () => {
                                     <span className='bg-card text-muted-foreground relative z-10 px-2'>Or continue with</span>
                                 </div>
                                 <div className='grid grid-cols-2 gap-4'>
-                                    <Button variant="outline" type='button' className='w-full'>Google</Button>
-                                    <Button variant="outline" type='button' className='w-full'>Github</Button>
+                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full cursor-pointer' onClick={() => onSocials('google')}>
+                                        <FaGoogle />
+                                    </Button>
+                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full cursor-pointer' onClick={() => onSocials('github')}>
+                                        <FaGithub />
+                                    </Button>
 
                                 </div>
                                 <div className='text-center text-sm'>Don&apos;t have an account <Link href="/sign-up" className='underline underline-offset-4'>Sign up</Link></div>
@@ -123,7 +149,7 @@ const SignInView = () => {
                         <span className='p-2 h-24 w-24 flex items-center justify-center rounded-full bg-black'>
                             <img className='h-20' src="./logo.svg" alt="logo" />
                         </span>
-                        <p className='text-2xl font-semibold text-white'>Meet Ai</p>
+                        <p className='text-2xl font-semibold text-white'>Echo Ai</p>
                     </div>
                 </CardContent>
             </Card>
