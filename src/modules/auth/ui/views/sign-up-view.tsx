@@ -184,10 +184,8 @@ const SignUpView = () => {
                     </Form>
 
 
-                    <div className='bg bg-radial from-violet-700 to-violet-900 relative hidden md:flex flex-col gap-y-4 items-center justify-center'>
-                        <span className='p-2 h-24 w-24 flex items-center justify-center rounded-full bg-black'>
-                            <img className='h-20' src="./logo.svg" alt="logo" />
-                        </span>
+                    <div className='bg-radial from-sidebar-accent to-sidebar relative hidden md:flex flex-col gap-y-4 items-center justify-center'>
+                        <img className='h-20' src="./logo.svg" alt="logo" />
                         <p className='text-2xl font-semibold text-white'>Echo Ai</p>
                     </div>
                 </CardContent>
