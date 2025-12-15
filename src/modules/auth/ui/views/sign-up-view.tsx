@@ -170,10 +170,10 @@ const SignUpView = () => {
                                     <span className='bg-card text-muted-foreground relative z-10 px-2'>Or continue with</span>
                                 </div>
                                 <div className='grid grid-cols-2 gap-4'>
-                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full cursor-pointer' onClick={() => onSocials('google')}>
+                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full ' onClick={() => onSocials('google')}>
                                         <FaGoogle />
                                     </Button>
-                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full cursor-pointer' onClick={() => onSocials('github')}>
+                                    <Button disabled={form.formState.isSubmitting || loading} variant="outline" type='button' className='w-full ' onClick={() => onSocials('github')}>
                                         <FaGithub />
                                     </Button>
 
