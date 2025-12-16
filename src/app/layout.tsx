@@ -27,7 +27,7 @@ export default function RootLayout({
       <TRPCReactProvider>
         <html lang="en">
           <body
-            className={`${inter.className} antialiased`}
+            className={`${inter.className} antialiased bg-secondary`}
           >
             <Toaster />
             {children}
