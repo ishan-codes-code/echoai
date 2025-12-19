@@ -11,6 +11,7 @@ import { GeneratedAvatar } from "@/components/generated-avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 interface AgentFormProps {
     onSuccess?: () => void;
@@ -102,7 +103,7 @@ const AgentForm = ({ onSuccess, onCancel, initialValues }: AgentFormProps) => {
                         <FormItem>
                             <FormLabel>Instructions</FormLabel>
                             <FormControl>
-                                <Input {...field} placeholder="You are a helpful math assistant that can answer questions and help with assignments" />
+                                <Textarea {...field} placeholder="You are a helpful math assistant that can answer questions and help with assignments" />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
