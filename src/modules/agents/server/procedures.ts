@@ -70,7 +70,7 @@ export const agentsRouter = createTRPCRouter({
           and(eq(agents.id, input.id), eq(agents.userId, ctx.auth.user.id))
         );
       if (!existingAgent) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Agenst not found" });
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agents not found" });
       }
       return existingAgent;
     }),
