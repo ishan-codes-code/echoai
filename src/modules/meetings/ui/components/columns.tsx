@@ -5,13 +5,13 @@ import { MeetingGetMany } from "../../types"
 import { GeneratedAvatar } from "@/components/generated-avatar"
 import { CircleCheckIcon, CircleXIcon, ClockArrowUpIcon, ClockFadingIcon, CornerDownRightIcon, LoaderIcon, VideoIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import hamanizeDuration from "humanize-duration"
+import humanizeDuration from "humanize-duration"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 
 
 function formatDuration(seconds: number) {
-    return hamanizeDuration(seconds * 1000, {
+    return humanizeDuration(seconds * 1000, {
         largest: 1,
         round: true,
         units: ["h", "m", "s"]
@@ -68,7 +68,7 @@ export const columns: ColumnDef<MeetingGetMany[number]>[] = [
             return (
                 <Badge
                     variant={"outline"}
-                    className={cn("capitalize [&>svg]:size-4 text-muted-foreground",
+                    className={cn("capitalize [&>svg]:size-4 text-muted-foreground ",
                         statusColorMap[row.original.status as keyof typeof statusColorMap]
                     )}
                 >
