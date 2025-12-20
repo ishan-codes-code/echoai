@@ -1,6 +1,5 @@
 import { CircleCheckIcon, CircleXIcon, ClockArrowUpIcon, LoaderIcon, VideoIcon } from "lucide-react"
 import { MeetingStatus } from "../../types"
-import { useState } from "react"
 import { useMeetingsFilters } from "../../hooks/use-meetings-filters"
 import CommandSelect from "@/components/command-select"
 
