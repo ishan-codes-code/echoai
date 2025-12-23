@@ -83,42 +83,10 @@ export const meetingsRouter = createTRPCRouter({
   create: protectedProcedures
     .input(meetingsInsertSchema)
     .mutation(async ({ input, ctx }) => {
-      const [createdMeeting] = await db
-        .insert(meetings)
-        .values({
-          ...input,
-          userId: ctx.auth.user.id,
-        })
-        .returning();
-
-      // TODO : Create Stream call , upsert Stream Users
-      const call = streamVideo.video.call("default", createdMeeting.id);
-
-      await call.create({
-        data: {
-          created_by_id: ctx.auth.user.id,
-          custom: {
-            meetingId: createdMeeting.id,
-            meetingName: createdMeeting.name,
-          },
-          settings_override: {
-            transcription: {
-              language: "en",
-              mode: "auto-on",
-              closed_caption_mode: "auto-on",
-            },
-            recording: {
-              mode: "auto-on",
-              quality: "1080p",
-            },
-          },
-        },
-      });
-
       const [existingAgent] = await db
         .select()
         .from(agents)
-        .where(eq(agents.id, createdMeeting.agentId));
+        .where(eq(agents.id, input.agentId));
 
       if (!existingAgent) {
         throw new TRPCError({
@@ -127,17 +95,55 @@ export const meetingsRouter = createTRPCRouter({
         });
       }
 
-      await streamVideo.upsertUsers([
-        {
-          id: existingAgent.id,
-          name: existingAgent.name,
-          role: "user",
-          image: generatedAvatarUri({
-            seed: existingAgent.name,
-            variant: "botttsNeutral",
-          }),
-        },
-      ]);
+      const [createdMeeting] = await db
+        .insert(meetings)
+        .values({
+          ...input,
+          userId: ctx.auth.user.id,
+        })
+        .returning();
+
+      const call = streamVideo.video.call("default", createdMeeting.id);
+
+      // Fire-and-forget (do not block request)
+      void (async () => {
+        try {
+          await call.create({
+            data: {
+              created_by_id: ctx.auth.user.id,
+              custom: {
+                meetingId: createdMeeting.id,
+                meetingName: createdMeeting.name,
+              },
+              settings_override: {
+                transcription: {
+                  language: "en",
+                  mode: "auto-on",
+                  closed_caption_mode: "auto-on",
+                },
+                recording: {
+                  mode: "auto-on",
+                  quality: "1080p",
+                },
+              },
+            },
+          });
+
+          await streamVideo.upsertUsers([
+            {
+              id: existingAgent.id,
+              name: existingAgent.name,
+              role: "user",
+              image: generatedAvatarUri({
+                seed: existingAgent.name,
+                variant: "botttsNeutral",
+              }),
+            },
+          ]);
+        } catch (err) {
+          console.error("Stream setup failed", err);
+        }
+      })();
 
       return createdMeeting;
     }),
