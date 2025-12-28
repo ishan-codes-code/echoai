@@ -1,11 +1,15 @@
 import { db } from "@/db";
 import { agents, meetings } from "@/db/schema";
+import { inngest } from "@/inngest/client";
 import { streamVideo } from "@/lib/stream-video";
 import {
   CallSessionStartedEvent,
   CallSessionParticipantLeftEvent,
+  CallEndedEvent,
+  CallTranscriptionReadyEvent,
+  CallRecordingReadyEvent,
 } from "@stream-io/node-sdk";
-import { and, eq, not } from "drizzle-orm";
+import { and, eq, isNull, not } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 function verifySignatureWithSDK(body: string, signature: string) {
@@ -134,7 +138,97 @@ export async function POST(req: NextRequest) {
 
     const call = streamVideo.video.call("default", meetingId);
     await call.end();
+  } else if (eventType === "call.session_ended") {
+    const event = payload as CallEndedEvent;
+    const meetingId = event.call.custom.meetingId;
+
+    if (!meetingId) {
+      return NextResponse.json({ error: "Missing meetingId" }, { status: 400 });
+    }
+
+    await db
+      .update(meetings)
+      .set({ status: "processing", endedAt: new Date() })
+      .where(and(eq(meetings.id, meetingId), eq(meetings.status, "active")));
+  } else if (eventType === "call.transcription_ready") {
+    const event = payload as CallTranscriptionReadyEvent;
+    const meetingId = event.call_cid?.split(":")[1];
+
+    // Always ACK Stream
+    if (!meetingId) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const [updatedMeeting] = await db
+      .update(meetings)
+      .set({ transcriptionUrl: event.call_transcription.url })
+      .where(
+        and(
+          eq(meetings.id, meetingId),
+          isNull(meetings.transcriptionUrl) // idempotency guard
+        )
+      )
+      .returning();
+
+    // If already processed, do nothing
+    if (!updatedMeeting) {
+      return NextResponse.json({ ok: true });
+    }
+
+    await inngest.send({
+      id: `meeting-processing-${updatedMeeting.id}`,
+      name: "meetings/processing",
+      data: {
+        meetingId: updatedMeeting.id,
+        transcriptUrl: updatedMeeting.transcriptionUrl,
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } // else if (eventType === "call.transcription_ready") {
+  //   const event = payload as CallTranscriptionReadyEvent;
+  //   const meetingId = event.call_cid.split(":")[1];
+
+  //   if (!meetingId) {
+  //     return NextResponse.json({ error: "Missing meetingId" }, { status: 400 });
+  //   }
+
+  //   const [updatedMeeting] = await db
+  //     .update(meetings)
+  //     .set({ transcriptionUrl: event.call_transcription.url })
+  //     .where(eq(meetings.id, meetingId))
+  //     .returning();
+
+  //   if (!updatedMeeting) {
+  //     return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
+  //   }
+
+  //   await inngest.send({
+  //     name: "meetings/processing",
+  //     data: {
+  //       meetingId: updatedMeeting.id,
+  //       transcriptUrl: updatedMeeting.transcriptionUrl,
+  //     },
+  //   });
+  // }
+  else if (eventType === "call.recording_ready") {
+    const event = payload as CallRecordingReadyEvent;
+    const meetingId = event.call_cid.split(":")[1];
+
+    if (!meetingId) {
+      return NextResponse.json({ error: "Missing meetingId" }, { status: 400 });
+    }
+
+    await db
+      .update(meetings)
+      .set({
+        recordingUrl: event.call_recording.url,
+      })
+      .where(eq(meetings.id, meetingId));
+
+    // TODO : Call ingest background job to summarise the transcript
   }
-  console.log("ok");
+
+  console.log(eventType);
   return NextResponse.json({ status: "ok" });
 }
