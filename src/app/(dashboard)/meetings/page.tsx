@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from "@/constants"
 import { auth } from "@/lib/auth"
 import { loadSearchParams } from "@/modules/meetings/params"
 import MeetingsListHeader from "@/modules/meetings/ui/components/meetings-list-header"
@@ -14,6 +15,7 @@ import { ErrorBoundary } from "react-error-boundary"
 interface Props {
     searchParams: Promise<SearchParams>
 }
+
 
 const Page = async ({ searchParams }: Props) => {
     const filters = await loadSearchParams(searchParams)
